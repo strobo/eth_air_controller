@@ -12,10 +12,14 @@
 #include <avr/io.h>
 #include <stdlib.h>
 #include <string.h>
+#include <avr/interrupt.h>
 #include "ip_arp_udp_tcp.h"
 #include "enc28j60.h"
 #include "timeout.h"
 #include "net.h"
+
+#include "uart.h"
+#include "xitoa.h"
 
 // This software is a web server only. 
 //
@@ -24,7 +28,7 @@
 // two devices:
 static uint8_t mymac[6] = {0x54,0x55,0x58,0x10,0x00,0x29};
 // how did I get the mac addr? Translate the first 3 numbers into ascii is: TUX
-static uint8_t myip[4] = {10,0,0,29};
+static uint8_t myip[4] = {192,168,11,100};
 //static uint8_t myip[4] = {192,168,2,20};
 // listen port for www
 #define MYWWWPORT 80
@@ -60,7 +64,7 @@ int main(void){
         
         /*initialize enc28j60*/
         enc28j60Init(mymac);
-        enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
+        //enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
         _delay_loop_1(0); // 60us
         
         /* Magjack leds configuration, see enc28j60 datasheet, page 11 */
@@ -70,9 +74,18 @@ int main(void){
         // enc28j60PhyWrite(PHLCON,0b0000 0100 0111 01 10);
         enc28j60PhyWrite(PHLCON,0x476);
 
-        DDRB|= (1<<DDB1); // LED, enable PB1, LED as output
-        LEDOFF;
-        
+        //DDRB|= (1<<DDB1); // LED, enable PB1, LED as output
+        //LEDOFF;
+        PORTB = 0xff;
+        DDRB = 0xff;
+
+        uart_init();
+        sei();
+
+        xfunc_out = (void (*)(char))uart_put;
+        xputs(PSTR("AVR-Ethernet test monitor\n"));
+        xprintf(PSTR("ENC28J60 Rev.%d\n"), enc28j60getrev());
+
         //init the ethernet/ip layer:
         init_ip_arp_udp_tcp(mymac,myip,MYWWWPORT);
 

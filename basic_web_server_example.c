@@ -12,10 +12,15 @@
 #include <avr/io.h>
 #include <stdlib.h>
 #include <string.h>
+#include <avr/interrupt.h>
 #include "ip_arp_udp_tcp.h"
 #include "enc28j60.h"
 #include "timeout.h"
 #include "net.h"
+
+#include "uart.h"
+#include "xitoa.h"
+#include "html_data.h"
 
 // This software is a web server only. 
 //
@@ -24,12 +29,12 @@
 // two devices:
 static uint8_t mymac[6] = {0x54,0x55,0x58,0x10,0x00,0x29};
 // how did I get the mac addr? Translate the first 3 numbers into ascii is: TUX
-static uint8_t myip[4] = {10,0,0,29};
+static uint8_t myip[4] = {192,168,11,100};
 
 // server listen port for www
 #define MYWWWPORT 80
 
-#define BUFFER_SIZE 550
+#define BUFFER_SIZE 1550
 static uint8_t buf[BUFFER_SIZE+1];
 
 uint16_t http200ok(void)
@@ -42,6 +47,9 @@ uint16_t print_webpage(uint8_t *buf)
 {
         uint16_t plen;
         plen=http200ok();
+        //xprintf("%s\n",pc_html);
+        //plen=fill_tcp_data_p(buf,plen, pc_html);
+        xprintf(PSTR("Return pc_html\n"));
         plen=fill_tcp_data_p(buf,plen,PSTR("<pre>"));
         plen=fill_tcp_data_p(buf,plen,PSTR("Hi!\nYour web server works great."));
         plen=fill_tcp_data_p(buf,plen,PSTR("</pre>\n"));
@@ -60,10 +68,19 @@ int main(void){
         
         //initialize the hardware driver for the enc28j60
         enc28j60Init(mymac);
-        enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
+        //enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
         _delay_loop_1(0); // 60us
         enc28j60PhyWrite(PHLCON,0x476);
         
+        PORTB = 0xff;
+        DDRB = 0xff;
+        uart_init();
+        sei();
+
+        xfunc_out = (void (*)(char))uart_put;
+        xputs(PSTR("AVR-Ethernet test monitor\n"));
+        xprintf(PSTR("ENC28J60 Rev.%d\n"), enc28j60getrev());
+
         //init the ethernet/ip layer:
         init_ip_arp_udp_tcp(mymac,myip,MYWWWPORT);
 

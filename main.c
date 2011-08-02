@@ -14,11 +14,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 #include "ip_arp_udp_tcp.h"
 #include "websrv_help_functions.h"
 #include "enc28j60.h"
 #include "timeout.h"
 #include "net.h"
+
+#include "uart.h"
+#include "xitoa.h"
 
 // This software is a web server only. 
 //
@@ -27,7 +31,7 @@
 // two devices:
 static uint8_t mymac[6] = {0x54,0x55,0x58,0x10,0x00,0x29};
 // how did I get the mac addr? Translate the first 3 numbers into ascii is: TUX
-static uint8_t myip[4] = {10,0,0,29};
+static uint8_t myip[4] = {192,168,11,100};
 //static uint8_t myip[4] = {192,168,255,100};
 // listen port for tcp/www:
 #define MYWWWPORT 80
@@ -35,7 +39,7 @@ static uint8_t myip[4] = {10,0,0,29};
 // listen port for udp
 #define MYUDPPORT 1200
 
-#define BUFFER_SIZE 550
+#define BUFFER_SIZE 1550
 static uint8_t buf[BUFFER_SIZE+1];
 static char gStrbuf[25];
 
@@ -183,7 +187,7 @@ int main(void){
 
         /*initialize enc28j60*/
         enc28j60Init(mymac);
-        enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
+        //enc28j60clkout(2); // change clkout from 6.25MHz to 12.5MHz
         _delay_loop_1(0); // 60us
         
         /* Magjack leds configuration, see enc28j60 datasheet, page 11 */
@@ -193,11 +197,21 @@ int main(void){
         // enc28j60PhyWrite(PHLCON,0b0000 0100 0111 01 10);
         enc28j60PhyWrite(PHLCON,0x476);
         
-        DDRB|= (1<<DDB1); // enable PB1, LED as output 
+        //DDRB|= (1<<DDB1); // enable PB1, LED as output 
         // the transistor on PD7:
-        DDRD|= (1<<DDD7);
-        PORTD &= ~(1<<PORTD7);// transistor off
-        
+        //DDRD|= (1<<DDD7);
+        //PORTD &= ~(1<<PORTD7);// transistor off
+
+        PORTB = 0xff;
+        DDRB = 0xff;
+
+        uart_init();
+        sei();
+
+        xfunc_out = (void (*)(char))uart_put;
+        xputs(PSTR("AVR-Ethernet test monitor\n"));
+        xprintf(PSTR("ENC28J60 Rev.%d\n"), enc28j60getrev());
+
         //init the web server ethernet/ip layer:
         init_ip_arp_udp_tcp(mymac,myip,MYWWWPORT);
 

@@ -39,6 +39,8 @@ CC=avr-gcc
 OBJCOPY=avr-objcopy
 # optimize for size:
 CFLAGS=-g -mmcu=$(MCU) -Wall -W -Os -mcall-prologues
+ASFLAGS        = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
+ALL_ASFLAGS    = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 #-------------------
 .PHONY: test0 all main
 #
@@ -115,6 +117,10 @@ ip_arp_udp_tcp.o: ip_arp_udp_tcp.c net.h enc28j60.h ip_config.h
 	$(CC) $(CFLAGS) -Os -c ip_arp_udp_tcp.c
 main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h
 	$(CC) $(CFLAGS) -Os -c main.c
+uart.o: uart.c uart.h
+	$(CC) $(CFLAGS) -Os -c uart.c
+xitoa.o : xitoa.S xitoa.h
+	$(CC) -c $(ALL_ASFLAGS) $< -o $@
 #------------------
 test0.hex: test0.elf 
 	$(OBJCOPY) -R .eeprom -O ihex test0.elf test0.hex 
@@ -186,9 +192,9 @@ basic_web_server_example.hex: basic_web_server_example.elf
 	@echo " "
 	@echo "Expl.: data=initialized data, bss=uninitialized data, text=code"
 	@echo " "
-basic_web_server_example.elf: basic_web_server_example.o enc28j60.o ip_arp_udp_tcp.o
-	$(CC) $(CFLAGS) -o basic_web_server_example.elf -Wl,-Map,basic_web_server_example.map basic_web_server_example.o enc28j60.o ip_arp_udp_tcp.o
-basic_web_server_example.o: basic_web_server_example.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h
+basic_web_server_example.elf: basic_web_server_example.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o
+	$(CC) $(CFLAGS) -o basic_web_server_example.elf -Wl,-Map,basic_web_server_example.map basic_web_server_example.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o
+basic_web_server_example.o: basic_web_server_example.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h uart.h xitoa.h html_data.h
 	$(CC) $(CFLAGS) -Os -c basic_web_server_example.c
 #------------------
 test_OKworks.hex: test_OKworks.elf 
@@ -197,9 +203,9 @@ test_OKworks.hex: test_OKworks.elf
 	@echo " "
 	@echo "Expl.: data=initialized data, bss=uninitialized data, text=code"
 	@echo " "
-test_OKworks.elf: test_OKworks.o enc28j60.o ip_arp_udp_tcp.o
-	$(CC) $(CFLAGS) -o test_OKworks.elf -Wl,-Map,test_OKworks.map test_OKworks.o enc28j60.o ip_arp_udp_tcp.o
-test_OKworks.o: test_OKworks.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h
+test_OKworks.elf: test_OKworks.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o
+	$(CC) $(CFLAGS) -o test_OKworks.elf -Wl,-Map,test_OKworks.map test_OKworks.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o
+test_OKworks.o: test_OKworks.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h uart.h xitoa.h
 	$(CC) $(CFLAGS) -Os -c test_OKworks.c
 #------------------
 test_readSiliconRev.hex: test_readSiliconRev.elf 
