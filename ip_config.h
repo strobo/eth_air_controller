@@ -31,7 +31,7 @@
 // into the url (like a Form action of type GET):
 #define WWW_client
 // if you do not need a browser and just a server:
-//#undef WWW_client
+#undef WWW_client
 //
 //------------- functions in websrv_help_functions.c --------------
 //
