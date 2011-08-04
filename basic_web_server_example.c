@@ -49,7 +49,7 @@ uint16_t print_webpage(uint8_t *buf)
         plen=http200ok();
         //xprintf("%s\n",pc_html);
         //plen=fill_tcp_data_p(buf,plen, pc_html);
-        xprintf(PSTR("Return pc_html\n"));
+        //xprintf(PSTR("Return pc_html\n"));
         plen=fill_tcp_data_p(buf,plen,PSTR("<pre>"));
         plen=fill_tcp_data_p(buf,plen,PSTR("Hi!\nYour web server works great."));
         plen=fill_tcp_data_p(buf,plen,PSTR("</pre>\n"));

@@ -107,15 +107,15 @@ eth_rem_dev_tcp.hex: eth_rem_dev_tcp.elf
 	@echo "Expl.: data=initialized data, bss=uninitialized data, text=code"
 	@echo " "
 
-eth_rem_dev_tcp.elf: main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o
-	$(CC) $(CFLAGS) -o eth_rem_dev_tcp.elf -Wl,-Map,eth_rem_dev_tcp.map main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o
+eth_rem_dev_tcp.elf: main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o
+	$(CC) $(CFLAGS) -o eth_rem_dev_tcp.elf -Wl,-Map,eth_rem_dev_tcp.map main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o
 websrv_help_functions.o: websrv_help_functions.c websrv_help_functions.h ip_config.h 
 	$(CC) $(CFLAGS) -Os -c websrv_help_functions.c
 enc28j60.o: enc28j60.c timeout.h enc28j60.h
 	$(CC) $(CFLAGS) -Os -c enc28j60.c
 ip_arp_udp_tcp.o: ip_arp_udp_tcp.c net.h enc28j60.h ip_config.h
 	$(CC) $(CFLAGS) -Os -c ip_arp_udp_tcp.c
-main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h
+main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h uart.h xitoa.h
 	$(CC) $(CFLAGS) -Os -c main.c
 uart.o: uart.c uart.h
 	$(CC) $(CFLAGS) -Os -c uart.c
