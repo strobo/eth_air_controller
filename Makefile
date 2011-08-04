@@ -115,7 +115,7 @@ enc28j60.o: enc28j60.c timeout.h enc28j60.h
 	$(CC) $(CFLAGS) -Os -c enc28j60.c
 ip_arp_udp_tcp.o: ip_arp_udp_tcp.c net.h enc28j60.h ip_config.h
 	$(CC) $(CFLAGS) -Os -c ip_arp_udp_tcp.c
-main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h uart.h xitoa.h
+main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h uart.h xitoa.h html_data.h
 	$(CC) $(CFLAGS) -Os -c main.c
 uart.o: uart.c uart.h
 	$(CC) $(CFLAGS) -Os -c uart.c

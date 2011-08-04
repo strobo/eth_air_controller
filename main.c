@@ -21,6 +21,7 @@
 #include "timeout.h"
 #include "net.h"
 
+#include "html_data.h"
 #include "uart.h"
 #include "xitoa.h"
 
@@ -39,7 +40,7 @@ static uint8_t myip[4] = {192,168,11,100};
 // listen port for udp
 #define MYUDPPORT 1200
 
-#define BUFFER_SIZE 550
+#define BUFFER_SIZE 1550
 static uint8_t buf[BUFFER_SIZE+1];
 static char gStrbuf[25];
 
@@ -231,9 +232,8 @@ int main(void){
                         // check if udp otherwise continue
                         goto UDP;
                 }
-                // toggle led everytime we get a http request        
+                // send data everytime we get a http request        
                 xprintf(PSTR("get http request\n"));
-                xprintf(PSTR(" dat_p: %d\n"), dat_p);
                 for(i=0;i <= 16; i++){
                         req[i] = buf[dat_p+i];
                 }
@@ -252,9 +252,46 @@ int main(void){
                 }
                 if (strncmp("/ ",(char *)&(buf[dat_p+4]),2)==0){
                         plen=http200ok();
-                        plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/password</p>\n"));
+                        plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/pc or m</p>\n"));
                         goto SENDTCP;
                 }
+                if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
+                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,pc_html);
+                        goto SENDTCP;
+                }
+                if ((strncmp("/m ",(char *)&(buf[dat_p+4]),3)==0)
+                     || (strncmp("/m/ ",(char *)&(buf[dat_p+4]),4)==0)){
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,mobile_html);
+                        goto SENDTCP;
+                }
+                // GET /ir?power=on&temp=28
+                if (strncmp("/ir?",(char *)&(buf[dat_p+4]),4)==0){
+                        if(find_key_val(
+                                (char *)&(buf[dat_p+8]),
+                                gStrbuf,
+                                5,
+                                "power"
+                                )
+                        ) {
+                                xprintf(PSTR("power=%s\n"),gStrbuf);
+                        }
+                        if(find_key_val(
+                                (char *)&(buf[dat_p+8]),
+                                gStrbuf,
+                                5,
+                                "temp"
+                                )
+                        ) {
+                                xprintf(PSTR("temp=%s\n"),gStrbuf);
+                        }
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,PSTR("Done\n"));
+                        goto SENDTCP;
+                }
+
                 cmd=analyse_get_url((char *)&(buf[dat_p+4]));
                 // for possible status codes see:
                 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html

@@ -12,7 +12,7 @@ state.power = 'off';\n\
 state.temp = 30;\n\
 state.send = function(){\n\
 		$.get('/ir',{power: state.power, temp: state.temp}, function(data){\
-					consolo.log(data);\n\
+					console.log(data);\n\
 							});\n\
 };\n\
 $(function(){\
