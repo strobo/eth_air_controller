@@ -57,8 +57,11 @@ const  prog_char mobile_html[] = "\
 <title>RemoteAirConditionerController</title>\
 </head><body>\n\
 <div>\n\
-<a href='#' id='on'>ON</a>\
-<a href='#' id='off'>OFF</a>\
+<form action='/ir'method='GET'>\
+<select name='power'>\
+<option value='on'>ON</option>\
+<option value='off'>OFF</option>\
+</select>\n\
 <select id='selectTemp'name='temp'>\
 <option value='30'>30</option>\
 <option value='29'>29</option>\
@@ -72,6 +75,8 @@ const  prog_char mobile_html[] = "\
 <option value='21'>21</option>\
 <option value='20'>20</option>\
 </select>\
+<input type='submit'value='OK!'>\
+</form>\
 <p>RemoteIR for mobile</p>\
 </body></html>";
 #endif

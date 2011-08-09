@@ -21,6 +21,7 @@
 #include "timeout.h"
 #include "net.h"
 
+#include "html_data.h"
 #include "uart.h"
 #include "xitoa.h"
 
@@ -62,6 +63,8 @@ uint8_t verify_password(char *str)
         }
         return(0);
 }
+
+// pc/?power=on&temp=27
 
 // analyse the url given
 // return values: -1 invalid password
@@ -174,6 +177,9 @@ int main(void){
         uint8_t payloadlen=0;
         char str[20];
         char cmdval;
+
+        char req[16];
+        char i;
         
         // set the clock speed to "no pre-scaler" (8MHz with internal osc or 
         // full external speed)
@@ -226,12 +232,15 @@ int main(void){
                         // check if udp otherwise continue
                         goto UDP;
                 }
-                // toggle led everytime we get a http request        
-                if (LEDISOFF){
-                        LEDON;
-                }else{
-                        LEDOFF;
+                // send data everytime we get a http request        
+                xprintf(PSTR("get http request\n"));
+                for(i=0;i <= 16; i++){
+                        req[i] = buf[dat_p+i];
                 }
+                req[i]=0;
+                xprintf(PSTR(" buf[0..16]: %s\n"), req);
+
+
                 if (strncmp("GET ",(char *)&(buf[dat_p]),4)!=0){
                         // head, post and other methods:
                         //
@@ -243,9 +252,46 @@ int main(void){
                 }
                 if (strncmp("/ ",(char *)&(buf[dat_p+4]),2)==0){
                         plen=http200ok();
-                        plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/password</p>\n"));
+                        plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/pc or m</p>\n"));
                         goto SENDTCP;
                 }
+                if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
+                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,pc_html);
+                        goto SENDTCP;
+                }
+                if ((strncmp("/m ",(char *)&(buf[dat_p+4]),3)==0)
+                     || (strncmp("/m/ ",(char *)&(buf[dat_p+4]),4)==0)){
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,mobile_html);
+                        goto SENDTCP;
+                }
+                // GET /ir?power=on&temp=28
+                if (strncmp("/ir?",(char *)&(buf[dat_p+4]),4)==0){
+                        if(find_key_val(
+                                (char *)&(buf[dat_p+8]),
+                                gStrbuf,
+                                5,
+                                "power"
+                                )
+                        ) {
+                                xprintf(PSTR("power=%s\n"),gStrbuf);
+                        }
+                        if(find_key_val(
+                                (char *)&(buf[dat_p+8]),
+                                gStrbuf,
+                                5,
+                                "temp"
+                                )
+                        ) {
+                                xprintf(PSTR("temp=%s\n"),gStrbuf);
+                        }
+                        plen=http200ok();
+                        plen=fill_tcp_data_p(buf,plen,PSTR("Done\n"));
+                        goto SENDTCP;
+                }
+
                 cmd=analyse_get_url((char *)&(buf[dat_p+4]));
                 // for possible status codes see:
                 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
@@ -254,14 +300,14 @@ int main(void){
                         goto SENDTCP;
                 }
                 if (cmd==1){
-                        PORTD|= (1<<PORTD7);// transistor on
+                        //PORTD|= (1<<PORTD7);// transistor on
                 }
                 if (cmd==0){
-                        PORTD &= ~(1<<PORTD7);// transistor off
+                        //PORTD &= ~(1<<PORTD7);// transistor off
                 }
                 if (cmd==2){
                         // favicon:
-                        plen=moved_perm(buf,0);
+                        //plen=moved_perm(buf,0);
                         goto SENDTCP;
                 }
                 if (cmd==-2){
@@ -271,7 +317,7 @@ int main(void){
                 }
                 // if (cmd==-2) or any other value
                 // just display the status:
-                plen=print_webpage(buf,(PORTD & (1<<PORTD7)));
+                plen=print_webpage(buf,/*(PORTD & (1<<PORTD7))*/0);
                 //
 SENDTCP:
                 www_server_reply(buf,plen); // send data
@@ -285,7 +331,7 @@ UDP:
                 if(eth_type_is_ip_and_my_ip(buf,plen)==0){
                         continue;
                 }
-                if (buf[IP_PROTO_P]==IP_PROTO_UDP_V&&buf[UDP_DST_PORT_H_P]==(MYUDPPORT>>8)&&buf[UDP_DST_PORT_L_P]==(MYUDPPORT&0xff)){
+                /*if (buf[IP_PROTO_P]==IP_PROTO_UDP_V&&buf[UDP_DST_PORT_H_P]==(MYUDPPORT>>8)&&buf[UDP_DST_PORT_L_P]==(MYUDPPORT&0xff)){
                         payloadlen=buf[UDP_LEN_L_P]-UDP_HEADER_LEN;
                         // you must sent a string starting with v
                         // e.g udpcom version 10.0.0.24
@@ -334,7 +380,7 @@ UDP:
                         strcpy(str,"e=inv_pw");
 ANSWER:
                         make_udp_reply_from_request(buf,str,strlen(str),MYUDPPORT);
-                }
+                }*/
         }
         return (0);
 }
