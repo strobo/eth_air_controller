@@ -1,0 +1,5 @@
+usage:
+access to http://hostname/pc or http://hostname/m
+request need to send to /ir
+Format:
+/ir?power=<on|off>&temp=<20-30>
