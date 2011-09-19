@@ -84,6 +84,8 @@ test_OKworks: test_OKworks.hex
 test_readSiliconRev: test_readSiliconRev.hex
 	@echo "done"
 #
+ir_server : ir_server.hex
+	@echo "done"
 #-------------------
 help: 
 	@echo "Usage: make all|basic_web_server_example|test0|test_readSiliconRev|test_OKworks|eth_rem_dev_tcp|main|test_web_client|test_emailnotify|test_twitter|test_identi_ca"
@@ -107,20 +109,23 @@ eth_rem_dev_tcp.hex: eth_rem_dev_tcp.elf
 	@echo "Expl.: data=initialized data, bss=uninitialized data, text=code"
 	@echo " "
 
-eth_rem_dev_tcp.elf: main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o
-	$(CC) $(CFLAGS) -o eth_rem_dev_tcp.elf -Wl,-Map,eth_rem_dev_tcp.map main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o
+eth_rem_dev_tcp.elf: main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o ir.o
+	$(CC) $(CFLAGS) -o eth_rem_dev_tcp.elf -Wl,-Map,eth_rem_dev_tcp.map main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o ir.o
 websrv_help_functions.o: websrv_help_functions.c websrv_help_functions.h ip_config.h 
 	$(CC) $(CFLAGS) -Os -c websrv_help_functions.c
 enc28j60.o: enc28j60.c timeout.h enc28j60.h
 	$(CC) $(CFLAGS) -Os -c enc28j60.c
 ip_arp_udp_tcp.o: ip_arp_udp_tcp.c net.h enc28j60.h ip_config.h
 	$(CC) $(CFLAGS) -Os -c ip_arp_udp_tcp.c
-main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h uart.h xitoa.h html_data.h
+main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions.h ip_config.h uart.h xitoa.h html_data.h ir.h
 	$(CC) $(CFLAGS) -Os -c main.c
 uart.o: uart.c uart.h
 	$(CC) $(CFLAGS) -Os -c uart.c
 xitoa.o : xitoa.S xitoa.h
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@
+	$(CC) -c $(ALL_ASFLAGS) $< -o $@[
+ir.o : ir.c ir.h 
+	$(CC) $(CFLAGS) -Os -c ir.c
+	
 #------------------
 test0.hex: test0.elf 
 	$(OBJCOPY) -R .eeprom -O ihex test0.elf test0.hex 
@@ -196,6 +201,16 @@ basic_web_server_example.elf: basic_web_server_example.o enc28j60.o ip_arp_udp_t
 	$(CC) $(CFLAGS) -o basic_web_server_example.elf -Wl,-Map,basic_web_server_example.map basic_web_server_example.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o
 basic_web_server_example.o: basic_web_server_example.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h uart.h xitoa.h html_data.h
 	$(CC) $(CFLAGS) -Os -c basic_web_server_example.c
+#------------------
+ir_server.hex : ir_server.elf
+	$(OBJCOPY) -R .eeprom -O ihex ir_server.elf ir_server.hex 
+	avr-size ir_server.elf
+	@echo " "
+	@echo "Expl.: data=initialized data, bss=uninitialized data, text=code"
+	@echo " "
+ir_server.elf: main.o ip_arp_udp_tcp.o enc28j60.o websrv_help_functions.o uart.o xitoa.o ir.o
+	$(CC) $(CFLAGS) -o ir_server.elf -Wl,-Map,ir_server.map mian.o enc28j60.o ip_arp_udp_tcp.o uart.o xitoa.o ir.o
+	
 #------------------
 test_OKworks.hex: test_OKworks.elf 
 	$(OBJCOPY) -R .eeprom -O ihex test_OKworks.elf test_OKworks.hex 

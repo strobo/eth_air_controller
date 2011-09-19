@@ -24,6 +24,7 @@
 #include "html_data.h"
 #include "uart.h"
 #include "xitoa.h"
+#include "ir.h"
 
 // This software is a web server only. 
 //
@@ -180,7 +181,14 @@ int main(void){
 
         char req[16];
         char i;
-        
+        volatile uint8_t ir_buf[35];
+
+	ir_buf[0]=0x11;ir_buf[1]=0xDA;ir_buf[2]=0x27;ir_buf[3]=0x00;ir_buf[4]=0xC5;ir_buf[5]=0x00;ir_buf[6]=0x00;ir_buf[7]=0xD7;
+	ir_buf[8]=0x11;ir_buf[9]=0xDA;ir_buf[10]=0x27;ir_buf[11]=0x00;ir_buf[12]=0x42;ir_buf[13]=0x00;ir_buf[14]=0x00;ir_buf[15]=0x54;
+	ir_buf[16]=0x11;ir_buf[17]=0xDA;ir_buf[18]=0x27;ir_buf[19]=0x00;ir_buf[20]=0x00;ir_buf[21]=0x39;ir_buf[22]=0x28;ir_buf[23]=0x00;
+	ir_buf[24]=0xA0;ir_buf[25]=0x00;ir_buf[26]=0x00;ir_buf[27]=0x06;ir_buf[28]=0x60;ir_buf[29]=0x00;ir_buf[30]=0x00;ir_buf[31]=0xC1;
+	ir_buf[32]=0x00;ir_buf[33]=0x00;ir_buf[34]=0x3A;
+
         // set the clock speed to "no pre-scaler" (8MHz with internal osc or 
         // full external speed)
         // set the clock prescaler. First write CLKPCE to enable setting 
@@ -234,11 +242,11 @@ int main(void){
                 }
                 // send data everytime we get a http request        
                 xprintf(PSTR("get http request\n"));
-                for(i=0;i <= 16; i++){
-                        req[i] = buf[dat_p+i];
-                }
-                req[i]=0;
-                xprintf(PSTR(" buf[0..16]: %s\n"), req);
+                //for(i=0;i <= 16; i++){
+                //        req[i] = buf[dat_p+i];
+                //}
+                //req[i]=0;
+                //xprintf(PSTR(" buf[0..16]: %s\n"), req);
 
 
                 if (strncmp("GET ",(char *)&(buf[dat_p]),4)!=0){
@@ -253,16 +261,26 @@ int main(void){
                 if (strncmp("/ ",(char *)&(buf[dat_p+4]),2)==0){
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/pc or m</p>\n"));
+                        // ir
+                        //
+                        
+                        xprintf(PSTR("ir_buf\n"));
+                        for (i = 0; i < 35; i++) {
+                                xprintf(PSTR("0x%02X "), ir_buf[i]);
+                        }
+                        init_ir();
+                        setData(DAIKIN, ir_buf, 35*8);
                         goto SENDTCP;
                 }
                 if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
-                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){
+                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){TCCR0A |= _BV(COM0B1);
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,pc_html);
                         goto SENDTCP;
                 }
                 if ((strncmp("/m ",(char *)&(buf[dat_p+4]),3)==0)
                      || (strncmp("/m/ ",(char *)&(buf[dat_p+4]),4)==0)){
+                                                                         TCCR0A &= ~_BV(COM0B1);
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,mobile_html);
                         goto SENDTCP;
