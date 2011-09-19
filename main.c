@@ -220,6 +220,7 @@ int main(void){
         DDRB = 0xff;
 
         uart_init();
+        init_ir();
         sei();
 
         xfunc_out = (void (*)(char))uart_put;
@@ -268,19 +269,17 @@ int main(void){
                         for (i = 0; i < 35; i++) {
                                 xprintf(PSTR("0x%02X "), ir_buf[i]);
                         }
-                        init_ir();
                         setData(DAIKIN, ir_buf, 35*8);
                         goto SENDTCP;
                 }
                 if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
-                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){TCCR0A |= _BV(COM0B1);
+                     || (strncmp("/pc/ ",(char *)&(buf[dat_p+4]),5)==0)){
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,pc_html);
                         goto SENDTCP;
                 }
                 if ((strncmp("/m ",(char *)&(buf[dat_p+4]),3)==0)
                      || (strncmp("/m/ ",(char *)&(buf[dat_p+4]),4)==0)){
-                                                                         TCCR0A &= ~_BV(COM0B1);
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,mobile_html);
                         goto SENDTCP;

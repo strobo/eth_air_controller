@@ -14,7 +14,7 @@ ISR_COMPARE(){
 }
 
 void tick(void){
-	PORTD ^= _BV(PORTD6);
+	//PORTD ^= _BV(PORTD6);
 	cli();
 	switch(work.state) {
 		case Idle:
@@ -127,8 +127,10 @@ void init_timer0(){
 	PORTD &= ~_BV(PORTD5);
 	TCCR0A = _BV(WGM01) | _BV(WGM00);
 	TCCR0B = _BV(WGM02) | 0b010;
+	/* if @10MHz */
 	//OCR0A = 32;
 	//OCR0B = 10;
+	/* if @20Mhz */
 	OCR0A = 65;
 	OCR0B = 20;
 	TCNT0 = 0;
@@ -139,7 +141,7 @@ void init_ticker(void (*func)(void)){
 	// CTC mode and clk/1
 	TCCR1B = _BV(WGM12) | _BV(CS10);
 
-	// interval 435us
+	// interval about 435us
 	// @10MHz -> OCR1A = 4348
 	// @20MHz -> OCR1A = 8698
 	OCR1A = 8580; // 4348
@@ -152,11 +154,7 @@ void init_ticker(void (*func)(void)){
 
 void init_ir(void)
 {
-	//tx.write(0.0);
-	//init_ticker(&tick);
 	init_timer0();
-	//tus_daikin = 435;
-
 
 	work.state = Idle;
 	work.bitcount = 0;
@@ -176,7 +174,7 @@ void init_ir(void)
 	tus.TRAILER_DAIKIN_HEAD = 1;
 	tus.TRAILER_DAIKIN_TAIL = 2;
 
-	tus.WAIT = 78; //78  79.05ms
+	tus.WAIT = 78; // 79.05ms
 }
 
 uint16_t setData(IR_Format format , uint8_t *buf, uint16_t bitlength)
@@ -198,12 +196,11 @@ uint16_t setData(IR_Format format , uint8_t *buf, uint16_t bitlength)
 
 	data.format = format;
 	data.bitlength = bitlength;
-	xprintf(PSTR("IR_DATA\n"));
+
 	for (i = 0; i < 35; i++) {
 		data.buffer[i] = buf[i];
-		xprintf(PSTR("0x%02X "), data.buffer[i]);
+		//xprintf(PSTR("0x%02X "), data.buffer[i]);
 	}
-
 
 	switch (format) {
 	//	case NEC:
