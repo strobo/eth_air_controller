@@ -1,3 +1,4 @@
+This code can be controlled air conditioner via internet on ATmega328p with ENC28J60.
 usage:
 access to http://hostname/pc or http://hostname/m
 request need to send to /ir

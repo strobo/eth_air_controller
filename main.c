@@ -25,6 +25,7 @@
 #include "uart.h"
 #include "xitoa.h"
 #include "ir.h"
+#include "airController.h"
 
 // This software is a web server only. 
 //
@@ -181,13 +182,8 @@ int main(void){
 
         char req[16];
         char i;
-        volatile uint8_t ir_buf[35];
-
-	ir_buf[0]=0x11;ir_buf[1]=0xDA;ir_buf[2]=0x27;ir_buf[3]=0x00;ir_buf[4]=0xC5;ir_buf[5]=0x00;ir_buf[6]=0x00;ir_buf[7]=0xD7;
-	ir_buf[8]=0x11;ir_buf[9]=0xDA;ir_buf[10]=0x27;ir_buf[11]=0x00;ir_buf[12]=0x42;ir_buf[13]=0x00;ir_buf[14]=0x00;ir_buf[15]=0x54;
-	ir_buf[16]=0x11;ir_buf[17]=0xDA;ir_buf[18]=0x27;ir_buf[19]=0x00;ir_buf[20]=0x00;ir_buf[21]=0x39;ir_buf[22]=0x28;ir_buf[23]=0x00;
-	ir_buf[24]=0xA0;ir_buf[25]=0x00;ir_buf[26]=0x00;ir_buf[27]=0x06;ir_buf[28]=0x60;ir_buf[29]=0x00;ir_buf[30]=0x00;ir_buf[31]=0xC1;
-	ir_buf[32]=0x00;ir_buf[33]=0x00;ir_buf[34]=0x3A;
+        
+        DATA_DAIKIN daikin;
 
         // set the clock speed to "no pre-scaler" (8MHz with internal osc or 
         // full external speed)
@@ -221,6 +217,7 @@ int main(void){
 
         uart_init();
         init_ir();
+        init_airController(&daikin);
         sei();
 
         xfunc_out = (void (*)(char))uart_put;
@@ -265,11 +262,11 @@ int main(void){
                         // ir
                         //
                         
-                        xprintf(PSTR("ir_buf\n"));
+                        xprintf(PSTR("daikin.buf\n"));
                         for (i = 0; i < 35; i++) {
-                                xprintf(PSTR("0x%02X "), ir_buf[i]);
+                                xprintf(PSTR("0x%02X "), daikin.buf[i]);
                         }
-                        setData(DAIKIN, ir_buf, 35*8);
+                        //setData(DAIKIN, ir_buf, 35*8);
                         goto SENDTCP;
                 }
                 if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
@@ -294,15 +291,24 @@ int main(void){
                                 )
                         ) {
                                 xprintf(PSTR("power=%s\n"),gStrbuf);
+                                if(strncmp("on", gStrbuf, 2) == 0){
+                                        airController_on(&daikin);
+                                        setData(DAIKIN, daikin.buf, 35*8);
+                                }else if(strncmp("off", gStrbuf, 3) == 0){
+                                        airController_off(&daikin);
+                                        setData(DAIKIN, daikin.buf, 35*8);
+                                }
                         }
                         if(find_key_val(
                                 (char *)&(buf[dat_p+8]),
                                 gStrbuf,
-                                5,
+                                4,
                                 "temp"
                                 )
                         ) {
                                 xprintf(PSTR("temp=%s\n"),gStrbuf);
+                                airController_setTemp(&daikin, atoi(gStrbuf));
+                                setData(DAIKIN, daikin.buf, 35*8);
                         }
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,PSTR("Done\n"));
