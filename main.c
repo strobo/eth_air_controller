@@ -40,7 +40,7 @@ static uint8_t myip[4] = {192,168,11,100};
 #define MYWWWPORT 80
 //
 // listen port for udp
-#define MYUDPPORT 1200
+//#define MYUDPPORT 1200
 
 #define BUFFER_SIZE 1550
 static uint8_t buf[BUFFER_SIZE+1];
@@ -150,37 +150,43 @@ uint16_t moved_perm(uint8_t *buf,uint8_t type)
 
 
 // prepare the webpage by writing the data to the tcp send buffer
-uint16_t print_webpage(uint8_t *buf,uint8_t on)
+//uint16_t print_webpage(uint8_t *buf,uint8_t on)
+//{
+//        uint16_t plen;
+//        plen=http200ok();
+//        plen=fill_tcp_data_p(buf,plen,PSTR("<h2>Eth remote switch</h2>\n<pre> "));
+//        //plen=fill_tcp_data_p(buf,plen,PSTR("<h2>printer switch</h2>\n<pre> "));
+//        if (on){
+//                plen=fill_tcp_data_p(buf,plen,PSTR(" <font color=#00FF00>ON</font>"));
+//                plen=fill_tcp_data_p(buf,plen,PSTR(" <a href=\"./?sw=0\">[switch off]</a>\n"));
+//        }else{
+//                plen=fill_tcp_data_p(buf,plen,PSTR("OFF"));
+//                plen=fill_tcp_data_p(buf,plen,PSTR(" <a href=\"./?sw=1\">[switch on]</a>\n"));
+//        }
+//        plen=fill_tcp_data_p(buf,plen,PSTR("\n<a href=\".\">[refresh status]</a>\n"));
+//        plen=fill_tcp_data_p(buf,plen,PSTR("</pre><hr>tuxgraphics.org\n"));
+//        return(plen);
+//}
+void init_power_settings(void)
 {
-        uint16_t plen;
-        plen=http200ok();
-        plen=fill_tcp_data_p(buf,plen,PSTR("<h2>Eth remote switch</h2>\n<pre> "));
-        //plen=fill_tcp_data_p(buf,plen,PSTR("<h2>printer switch</h2>\n<pre> "));
-        if (on){
-                plen=fill_tcp_data_p(buf,plen,PSTR(" <font color=#00FF00>ON</font>"));
-                plen=fill_tcp_data_p(buf,plen,PSTR(" <a href=\"./?sw=0\">[switch off]</a>\n"));
-        }else{
-                plen=fill_tcp_data_p(buf,plen,PSTR("OFF"));
-                plen=fill_tcp_data_p(buf,plen,PSTR(" <a href=\"./?sw=1\">[switch on]</a>\n"));
-        }
-        plen=fill_tcp_data_p(buf,plen,PSTR("\n<a href=\".\">[refresh status]</a>\n"));
-        plen=fill_tcp_data_p(buf,plen,PSTR("</pre><hr>tuxgraphics.org\n"));
-        return(plen);
+        // Disable TWI TIMER2 ADC
+        PRR |= _BV(PRTWI); 
+        PRR |= _BV(PRTIM2);
+        PRR |= _BV(PRADC);
 }
-
 
 int main(void){
 
         
         uint16_t plen;
         uint16_t dat_p;
-        uint8_t cmd_pos=0;
+        //uint8_t cmd_pos=0;
         int8_t cmd;
-        uint8_t payloadlen=0;
-        char str[20];
-        char cmdval;
+        //uint8_t payloadlen=0;
+        //char str[20];
+        //char cmdval;
 
-        char req[16];
+        //char req[16];
         char i;
         
         DATA_DAIKIN daikin;
@@ -212,9 +218,10 @@ int main(void){
         //DDRD|= (1<<DDD7);
         //PORTD &= ~(1<<PORTD7);// transistor off
 
-        PORTB = 0xff;
-        DDRB = 0xff;
+        //PORTB = 0xff;
+        //DDRB = 0xff;
 
+        init_power_settings();
         uart_init();
         init_ir();
         init_airController(&daikin);
@@ -223,7 +230,7 @@ int main(void){
         xfunc_out = (void (*)(char))uart_put;
         xputs(PSTR("AVR-Ethernet test monitor\n"));
         xprintf(PSTR("ENC28J60 Rev.%d\n"), enc28j60getrev());
-
+xprintf(PSTR("PRR=%02X\n"),PRR);
         //init the web server ethernet/ip layer:
         init_ip_arp_udp_tcp(mymac,myip,MYWWWPORT);
 
@@ -240,14 +247,10 @@ int main(void){
                 }
                 // send data everytime we get a http request        
                 xprintf(PSTR("get http request\n"));
-                //for(i=0;i <= 16; i++){
-                //        req[i] = buf[dat_p+i];
-                //}
-                //req[i]=0;
-                //xprintf(PSTR(" buf[0..16]: %s\n"), req);
 
 
                 if (strncmp("GET ",(char *)&(buf[dat_p]),4)!=0){
+                        xprintf(PSTR("'GET \n'"));
                         // head, post and other methods:
                         //
                         // for possible status codes see:
@@ -259,14 +262,6 @@ int main(void){
                 if (strncmp("/ ",(char *)&(buf[dat_p+4]),2)==0){
                         plen=http200ok();
                         plen=fill_tcp_data_p(buf,plen,PSTR("<p>Usage: http://host_or_ip/pc or m</p>\n"));
-                        // ir
-                        //
-                        
-                        xprintf(PSTR("daikin.buf\n"));
-                        for (i = 0; i < 35; i++) {
-                                xprintf(PSTR("0x%02X "), daikin.buf[i]);
-                        }
-                        //setData(DAIKIN, ir_buf, 35*8);
                         goto SENDTCP;
                 }
                 if ((strncmp("/pc ",(char *)&(buf[dat_p+4]),4)==0)
@@ -340,7 +335,7 @@ int main(void){
                 }
                 // if (cmd==-2) or any other value
                 // just display the status:
-                plen=print_webpage(buf,/*(PORTD & (1<<PORTD7))*/0);
+                //plen=print_webpage(buf,/*(PORTD & (1<<PORTD7))*/0);
                 //
 SENDTCP:
                 www_server_reply(buf,plen); // send data
@@ -350,8 +345,10 @@ SENDTCP:
                 // -------------------------------
                 // udp start, we listen on udp port 1200=0x4B0
 UDP:
+//                xprintf(PSTR("here is UDP:\n"));
                 // check if ip packets are for us:
                 if(eth_type_is_ip_and_my_ip(buf,plen)==0){
+  //                      xprintf(PSTR("here is eth_type_is_ip_andd_my_ip\n"));
                         continue;
                 }
                 /*if (buf[IP_PROTO_P]==IP_PROTO_UDP_V&&buf[UDP_DST_PORT_H_P]==(MYUDPPORT>>8)&&buf[UDP_DST_PORT_L_P]==(MYUDPPORT&0xff)){
