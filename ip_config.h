@@ -18,7 +18,7 @@
 // a spontanious sending UDP client
 #define UDP_client
 //
-
+#undef UDP_client
 // to send out a ping:
 #undef PING_client
 #define PINGPATTERN 0x42

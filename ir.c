@@ -167,7 +167,7 @@ void init_ir(void)
 	data.bitlength = 0;
 
 	tus.STARTER_HEAD = 12;
-	tus.STARTER_TAIL = 58;	// 57
+	tus.STARTER_TAIL = 58;
 	tus.LEADER_DAIKIN_HEAD = 8;
 	tus.LEADER_DAIKIN_TAIL = 4;
 

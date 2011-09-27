@@ -122,7 +122,7 @@ main.o: main.c ip_arp_udp_tcp.h enc28j60.h timeout.h net.h websrv_help_functions
 uart.o: uart.c uart.h
 	$(CC) $(CFLAGS) -Os -c uart.c
 xitoa.o : xitoa.S xitoa.h
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@[
+	$(CC) -c $(ALL_ASFLAGS) $< -o $@
 ir.o : ir.c ir.h 
 	$(CC) $(CFLAGS) -Os -c ir.c
 airController.o : airController.c airController.h 
