@@ -43,7 +43,7 @@ typedef struct {
 typedef struct {
 	IR_Format format;
 	int bitlength;
-	uint8_t buffer[64];
+	uint8_t buffer[40];
 } data_t;
 
 void tick(void);

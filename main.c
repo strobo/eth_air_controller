@@ -42,7 +42,7 @@ static uint8_t myip[4] = {192,168,11,100};
 // listen port for udp
 //#define MYUDPPORT 1200
 
-#define BUFFER_SIZE 1550
+#define BUFFER_SIZE 1600
 static uint8_t buf[BUFFER_SIZE+1];
 static char gStrbuf[25];
 
@@ -187,7 +187,7 @@ int main(void){
         //char cmdval;
 
         //char req[16];
-        char i;
+        //char i;
         
         DATA_DAIKIN daikin;
 
